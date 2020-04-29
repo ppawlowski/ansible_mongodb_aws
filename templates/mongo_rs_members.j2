@@ -1,0 +1,8 @@
+#jinja2: lstrip_blocks: "True"
+use admin
+{% for host in groups['tag_mongo_server_type_arbiter'] %}
+    rs.addArb("{{hostvars[host].ec2_tag_Name}}.{{mongo_base_domain}}:{{mongodb_port}}");
+{% endfor %}
+{% for host in groups['tag_mongo_server_type_secondary'] %}
+    rs.add("{{hostvars[host].ec2_tag_Name}}.{{mongo_base_domain}}:{{mongodb_port}}");
+{% endfor %}

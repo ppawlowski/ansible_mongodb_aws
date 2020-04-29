@@ -1,0 +1,6 @@
+mongodb_security_enabled: true
+mongodb_key_file: /etc/mongo-keyfile
+mongodb_replication_name: "replicaSet"
+mongodb_replication_set_configuration_file: /tmp/cluster_replication_config.js
+mongodb_replication_init_configuration_file: /tmp/rs_init.js
+mongodb_replication_members_configuration_file: /tmp/rs_members.js

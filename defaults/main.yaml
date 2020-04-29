@@ -1,0 +1,11 @@
+mongodb_configuration_file: /etc/mongod.conf
+mongodb_bind_ip: "0.0.0.0"
+mongodb_port: 27017
+mongodb_log_directory: /data/log
+mongodb_log_file: /data/log/mongo.log
+mongodb_db_directory: /data/mongo
+mongodb_soft_nproc: 32000
+mongodb_hard_nproc: 32000
+mongodb_soft_nofile: 64000
+mongodb_hard_nofile: 64000
+mongodb_telegraf_monitoring: true

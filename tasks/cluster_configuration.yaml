@@ -1,0 +1,93 @@
+- name: Include cluster configuration-specific variables
+  include_vars:
+    file: 'cluster_configuration.yaml'
+
+- name: Apply MongoDB configuration
+  template:
+    src: mongodb.conf.j2
+    dest: "{{mongodb_configuration_file}}"
+  notify: Restart MongoDB
+
+- name: Copy key file to all cluster servers
+  copy:
+    src: "{{env}}_mongo_key_file"
+    dest: "{{mongodb_key_file}}"
+    owner: "{{mongodb_user}}"
+    group: "{{mongodb_group}}"
+    mode: 0400
+
+- name: Force MongoDB restart before cluster setup
+  meta: flush_handlers
+
+- name: Check replication set status
+  command: /usr/bin/mongo --quiet -u '{{mongodb_admin_username}}' -p '{{ mongodb_admin_password }}' --port '{{mongodb_port}}' --authenticationDatabase 'admin' --eval 'printjson(rs.status().myState <= 10)'
+  register: rsstatus
+  changed_when: false
+  when: ansible_host in groups['tag_mongo_server_type_primary']
+
+- name: Create cluster initialization configuration on primary server
+  template:
+    src: mongo_rs_init.j2
+    dest: "{{mongodb_replication_init_configuration_file}}"
+  when:
+    - ansible_host in groups['tag_mongo_server_type_primary']
+    - rsstatus.stdout == 'false'
+
+- name: Initialize cluster on primary server
+  shell: /usr/bin/mongo -u '{{mongodb_admin_username}}' -p '{{ mongodb_admin_password }}' --authenticationDatabase 'admin' --port '{{mongodb_port}}' < "{{mongodb_replication_init_configuration_file}}"
+  when:
+    - ansible_host in groups['tag_mongo_server_type_primary']
+    - rsstatus.stdout == 'false'
+
+- name: Create cluster secondary servers configuration on primary server
+  template:
+    src: mongo_rs_members.j2
+    dest: "{{mongodb_replication_members_configuration_file}}"
+  register: mongo_members
+  when:
+    - ansible_host in groups['tag_mongo_server_type_primary']
+
+- name: Add secondary and arbiter servers to the cluster
+  shell: /usr/bin/mongo -u '{{mongodb_admin_username}}' -p '{{ mongodb_admin_password }}' --authenticationDatabase 'admin' --port '{{mongodb_port}}' < '{{mongodb_replication_members_configuration_file}}'
+  when:
+    - ansible_host in groups['tag_mongo_server_type_primary']
+    - mongo_members.changed
+
+- name: Wait for replication set to synchronize
+  pause:
+    seconds: 30
+  when:
+    - ansible_host in groups['tag_mongo_server_type_primary']
+    - rsstatus.stdout == 'false'
+
+- name: Include environment-specific variables
+  include_vars:
+    file: '{{env}}_mongo_users.yaml'
+
+- name: Create administrative users
+  mongodb_user:
+    login_user: "{{mongodb_admin_username}}"
+    login_password: "{{mongodb_admin_password}}"
+    login_port: "{{mongodb_port}}"
+    login_database: admin
+    database: admin
+    name: "{{mongodb_admin_username}}"
+    password: "{{mongodb_admin_password}}"
+    roles: root
+    state: present
+  when: ansible_host in groups['tag_mongo_server_type_primary']
+
+- name: Create application users
+  mongodb_user:
+    login_user: "{{mongodb_admin_username}}"
+    login_password: "{{mongodb_admin_password}}"
+    login_port: "{{mongodb_port}}"
+    login_database: admin
+    database: "{{item.database}}"
+    name: "{{item.username}}"
+    password: "{{item.password}}"
+    roles: "{{item.role}}"
+    state: "{{item.state}}"
+  with_items: "{{mongodb_users}}"
+  when:
+     - ansible_host in groups['tag_mongo_server_type_primary']

@@ -1,0 +1,12 @@
+mongodb_required_variables:
+  - mongodb_version
+
+mongodb_acceptable_versions:
+  - "3.6"
+
+mongodb_user: "mongod"
+mongodb_group: "mongod"
+mongodb_admin_username: "mongoadmin"
+mongodb_admin_password: "mongoadmin$3cr3tP@ssw0rd"
+mongodb_monitoring_username: "mongomonitoringuser"
+mongodb_monitoring_password: "mongomonitoring$ecr3tP@ssw0rd"

@@ -1,0 +1,6 @@
+mongodb_users:
+  - username: "mongouser"
+    password: "P@ssw0rd"
+    database: "myDb"
+    role: readWrite
+    state: present

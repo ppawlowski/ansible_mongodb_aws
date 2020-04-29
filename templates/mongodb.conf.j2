@@ -1,0 +1,59 @@
+# mongod.conf
+
+# for documentation of all options, see:
+#   http://docs.mongodb.org/manual/reference/configuration-options/
+
+# where to write logging data.
+systemLog:
+  destination: file
+  logAppend: true
+  path: {{mongodb_log_file}}
+
+# Where and how to store data.
+storage:
+  dbPath: {{mongodb_db_directory}}
+  journal:
+    enabled: true
+#  engine:
+#  mmapv1:
+#  wiredTiger:
+
+# how the process runs
+processManagement:
+  fork: true  # fork and run in background
+  pidFilePath: /var/run/mongodb/mongod.pid  # location of pidfile
+  timeZoneInfo: /usr/share/zoneinfo
+
+# network interfaces
+net:
+  port: {{mongodb_port}}
+  bindIp: {{mongodb_bind_ip}}
+
+
+security:
+{% if mongodb_security_enabled %}
+    authorization: enabled
+{% else %}
+    authorization: disabled
+{% endif %}
+{% if mongodb_key_file is defined %}
+    keyFile: {{mongodb_key_file}}
+{% endif %}
+
+#operationProfiling:
+
+{% if mongodb_replication_name is defined %}
+replication:
+    replSetName: "{{mongodb_replication_name}}"
+    # For Primary-Secondary-Arbiter setup only
+    # Detailed information: https://docs.mongodb.com/manual/reference/read-concern-majority/#disable-read-concern-majority
+    enableMajorityReadConcern: false
+{% endif %}
+
+#sharding:
+
+## Enterprise-Only Options
+
+#auditLog:
+
+#snmp:

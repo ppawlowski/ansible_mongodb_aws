@@ -1,0 +1,11 @@
+- name: Prepare storage
+  import_tasks: storage.yaml
+  tags: packer
+
+- name: Prepare AMI with MongoDB
+  import_tasks: ami_preparation.yaml
+  tags: packer
+
+- name: Configure MongoDB cluster
+  import_tasks: cluster_configuration.yaml
+  tags: terraform

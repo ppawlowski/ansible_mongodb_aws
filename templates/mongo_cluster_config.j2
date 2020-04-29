@@ -1,0 +1,15 @@
+#jinja2: lstrip_blocks: "True"
+cluster_config = {
+    _id : "{{mongodb_replication_name}}",
+    members : [
+    {% for host in groups['tag_ansible_group_mongo_' ~ env ~ '_servers'] %}
+        {% if hostvars[host].ec2_tag_mongo_server_type == "arbiter" %}
+            { _id : {{ loop.index }}, host : "{{hostvars[host].ec2_tag_Name}}.{{mongo_base_domain}}:{{mongodb_port}}", arbiterOnly: true },
+        {% else %}
+            { _id : {{ loop.index }}, host : "{{hostvars[host].ec2_tag_Name}}.{{mongo_base_domain}}:{{mongodb_port}}" },
+        {% endif %}
+    {% endfor %}
+     ]
+}
+
+rs.initiate(cluster_config)

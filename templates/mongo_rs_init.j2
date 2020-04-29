@@ -1,0 +1,9 @@
+#jinja2: lstrip_blocks: "True"
+rs.initiate({
+    _id: "{{mongodb_replication_name}}",
+    members: [
+    {% for host in groups['tag_mongo_server_type_primary'] %}
+        { _id : 0, host: "{{hostvars[host].ec2_tag_Name}}.{{mongo_base_domain}}:{{mongodb_port}}" },
+    {% endfor %}
+    ]
+})

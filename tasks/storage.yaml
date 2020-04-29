@@ -1,0 +1,36 @@
+- name: Create data partition
+  become: true
+  parted:
+    device: '{{mongo_data_device_name}}'
+    number: 1
+    state: present
+
+- name: Format data partition
+  become: true
+  filesystem:
+    dev: '{{mongo_data_partition_name}}'
+    fstype: xfs
+
+- name: Create {{mongo_data_mount_point}} directory
+  become: true
+  file:
+    path: '{{mongo_data_mount_point}}'
+    state: directory
+    mode: 0755
+
+- name: Mount {{mongo_data_partition_name}} to {{mongo_data_mount_point}}
+  become: true
+  mount:
+    path: '{{mongo_data_mount_point}}'
+    src: '{{mongo_data_partition_name}}'
+    fstype: xfs
+    opts: noatime
+    state: mounted
+
+- name: Change read ahead block size
+  cron:
+    name: Set readahead on mongo storage on each boot
+    special_time: reboot
+    user: root
+    cron_file: /etc/crontab
+    job: /sbin/blockdev --setra 32 '{{mongo_data_partition_name}}'
